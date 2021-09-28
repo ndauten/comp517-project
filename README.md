@@ -55,24 +55,23 @@ process early and to solicit feedback from me.
 
 Research Focus Statement: 
 
-  - I am studying [topic]
-  - because I want to [what you want to explore]
-  - in order to show my readers [something you want to show
-    them]
+  - I am studying abstractions of the Endokernel model
+  - because I want to reason about the correctness of the principles of the Endokernel
+  - in order to show my readers that they can trust and build upon this model.
 
-Team Name:
-
-Team Member: 
-  - Name:
-  - Rice ID:
+Team Name: Endocert
 
 Team Member: 
-  - Name:
-  - Rice ID:
+  - Name: Alexis LE GLAUNEC
+  - Rice ID: afl5
+
+Team Member: 
+  - Name: Senthil Rajasekaran
+  - Rice ID: sr79
   
 Team Member: 
-  - Name:
-  - Rice ID:
+  - Name: Ziyang "Zion" Yang
+  - Rice ID: zy36
 
 ## Turning in Instructions
 
