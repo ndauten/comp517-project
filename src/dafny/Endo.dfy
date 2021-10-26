@@ -9,7 +9,7 @@ class Endokernel {
     var kernel:Kernel;
 
     method createEndoprocess(capability:Capability, instruction:string) returns (endoprocess:Endoprocess) modifies this {
-        endoprocess := new Endoprocess(capability.subspace, instruction, this);
+        endoprocess := new Endoprocess(this.nextPid, capability.subspace, instruction, this);
         this.capabilities := capabilities[capability := endoprocess];
         this.endoprocesses := this.endoprocesses[this.nextPid := endoprocess];
         this.nextPid := nextPid + 1;
@@ -17,7 +17,7 @@ class Endokernel {
 
     method trap(instruction:string) modifies this  {
         if (instruction !in instructionMap){
-           print "Trap error: no policy for this instruction\n";
+           print "trap error: no policy for this instruction\n";
         } 
         else {
             var capability:Capability := instructionMap[instruction];
@@ -32,9 +32,32 @@ class Endokernel {
         }
     }
 
-    method trapEndoprocess(instruction:string) {
-        print "Trapping back instruction " + instruction + " from Endoprocess in Endokernel\n";
-        kernel.exec(instruction);
+    method trapEndoprocess(instruction:string, endoId:int) {
+        // Verifying if endoprocess has correct access rights to execute this instruction
+        if (instruction !in instructionMap){
+           print "trapEndoprocess error: no policy for this instruction\n";
+        }  
+        else {
+            var capability := instructionMap[instruction];
+            if (capability !in capabilities) {
+                print "trapEndoprocess error: this endoprocess has not the required rights for such instruction\n";
+            } else {
+                var endoprocessExpected := capabilities[capability];
+                if ( endoId !in endoprocesses) {
+                    print "trapEndoprocess error: unknown endoprocess\n";
+                }
+                else {
+                    var endoprocessTrapped := endoprocesses[endoId];
+                    if (endoprocessTrapped != endoprocessExpected) {
+                        print "trapEndoprocess error: unknown endoprocess\n";
+                    }
+                    else {
+                        print "Trapping back instruction " + instruction + " from Endoprocess in Endokernel\n";
+                        kernel.exec(instruction);
+                    }
+                }
+            }
+        }
     }
 
 
@@ -49,11 +72,13 @@ class Endokernel {
 }
 
 class Endoprocess {
+    var id:int;
     var memorySpace:seq<int>
     var instructions: string
     var endokernel:Endokernel;
 
-    constructor(memorySpace:seq<int>, instructions:string, endokernel:Endokernel) {
+    constructor(id:int, memorySpace:seq<int>, instructions:string, endokernel:Endokernel) {
+        this.id := id;
         this.memorySpace := memorySpace;
         this.instructions := instructions;
         this.endokernel := endokernel;
@@ -61,6 +86,6 @@ class Endoprocess {
 
     method exec(instruction:string)  {
         print "Executing instruction " + instruction + " in Endoprocess\n";
-        endokernel.trapEndoprocess(instruction);
+        endokernel.trapEndoprocess(instruction, this.id);
     }
 }
