@@ -9,7 +9,7 @@ class Test {
         var kernel:Kernel := new Kernel();
         var endokernel:Endokernel := new Endokernel(kernel);
         var p:Process := new Process(0, [0,1,2,3], ["write(0,a)"], endokernel);
-        p.entryProcess(endokernel);
+        p.exec();
     }
 
     method testProcess2() {
@@ -17,7 +17,7 @@ class Test {
         var kernel:Kernel := new Kernel();
         var endokernel:Endokernel := new Endokernel(kernel);
         var p:Process := new Process(0, [0,1,2,3], ["read(0,a)"], endokernel);
-        p.entryProcess(endokernel);
+        p.exec();
     }
 
 

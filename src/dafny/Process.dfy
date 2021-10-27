@@ -8,6 +8,7 @@ class Process {
     var pc: int;
 
     constructor(pid:int, memorySpace:seq<int>, instructions:seq<string>, endokernel:Endokernel)
+    ensures this.endokernel == old(endokernel)
     {
         this.pid := pid;
         this.memorySpace := memorySpace;
@@ -22,12 +23,6 @@ class Process {
             this.endokernel.trap(instructions[pc]);
             pc := pc + 1;
         }
-    }
-
-    method entryProcess(endokernel:Endokernel) modifies this, endokernel {
-        // Example of a simple execution of the Endokernel abstraction
-        this.endokernel := endokernel;
-        this.exec();
     }
 
 }
