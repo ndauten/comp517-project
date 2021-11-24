@@ -15,7 +15,7 @@ class Endokernel {
         this.nextPid := nextPid + 1;
     }
 
-    method trap(instruction:string) modifies this  {
+    method trap(instruction:string) modifies this  { 
         if (instruction !in instructionMap){
            print "trap error: no policy for this instruction\n";
         } 

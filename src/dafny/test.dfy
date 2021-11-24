@@ -8,16 +8,16 @@ class Test {
         // Example of a simple execution of the Endokernel abstraction
         var kernel:Kernel := new Kernel();
         var endokernel:Endokernel := new Endokernel(kernel);
-        var p:Process := new Process(0, [0,1,2,3], ["write(0,a)"], endokernel);
-        p.exec();
+        var instruction:string := "write(0,a)";
+        var p:Process := new Process(0, [0,1,2,3], [instruction], endokernel);
     }
 
     method testProcess2() {
         // Example of a simple execution of the Endokernel abstraction that is not handled
         var kernel:Kernel := new Kernel();
         var endokernel:Endokernel := new Endokernel(kernel);
-        var p:Process := new Process(0, [0,1,2,3], ["read(0,a)"], endokernel);
-        p.exec();
+        var instruction:string := "read(0,a)";
+        var p:Process := new Process(0, [0,1,2,3], [instruction], endokernel);
     }
 
 
