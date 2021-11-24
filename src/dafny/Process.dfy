@@ -18,7 +18,7 @@ class Process {
         this.thread := new Thread(0, 0, 0, instructions, endokernel);
     }
 
-    method exec() modifies this, endokernel, thread {
+    method exec() modifies this, thread, thread.endokernel {
         thread.exec();
     }
 
