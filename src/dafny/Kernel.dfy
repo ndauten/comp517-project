@@ -1,7 +1,9 @@
+include "Instructions.dfy"
+
 class Kernel{
 
-    method exec(instruction:string) {
-        print "Executing instruction " + instruction + " in kernel\n";
+    method exec(instruction:Instruction) {
+        print "Executing instruction in kernel\n";
     }
 
     constructor () {

@@ -1,13 +1,14 @@
 include "Endo.dfy"
+include "Instructions.dfy"
 
 class Thread {
     var tid:int;
     var pc:int;
     var sp:int;
-    var instructions:seq<string>;
+    var instructions:seq<Instruction>;
     var endokernel:Endokernel;
 
-    constructor (tid:int, pc:int, sp:int, instructions:seq<string>, endokernel:Endokernel)
+    constructor (tid:int, pc:int, sp:int, instructions:seq<Instruction>, endokernel:Endokernel)
     ensures this.endokernel == old(endokernel)
      {
         this.tid := tid;
@@ -19,7 +20,7 @@ class Thread {
 
     method exec() modifies this, endokernel {
         if (0 <= pc < |instructions|) {
-            print "Executing instruction " + instructions[pc] + " in Process\n";
+            print "Executing instruction in Process\n";
             this.endokernel.trap(instructions[pc]);
             pc := pc + 1;
         }
