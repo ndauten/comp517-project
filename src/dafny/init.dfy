@@ -4,19 +4,19 @@ include "Kernel.dfy"
 include "Thread.dfy"
 include "Instructions.dfy"
 
-class Test {
+class Init {
 
-    method testProcess1() {
+    method initProcess1() {
         // Example of a simple execution of the Endokernel abstraction
         var kernel:Kernel := new Kernel();
         var endokernel:Endokernel := new Endokernel(kernel);
-        var instruction:Instruction := Write('a', 0);
+        var instruction:Instruction := Instruction.Write('a', 0);
         var thread:Thread := new Thread(0, 0, 0, [instruction], endokernel);
         var p:Process := new Process(0, [0,1,2,3], endokernel, thread);
         p.exec();
     }
 
-/*     method testProcess2() {
+/*     method initProcess2() {
         // Example of a simple execution of the Endokernel abstraction that is not handled
         var kernel:Kernel := new Kernel();
         var endokernel:Endokernel := new Endokernel(kernel);
@@ -27,7 +27,7 @@ class Test {
  */
 
     method Main()  {
-        testProcess1();
-        //testProcess2();
+        initProcess1();
+        //initProcess2();
     }
 }

@@ -1,9 +1,12 @@
 include "Instructions.dfy"
+include "Syscalls.dfy"
 
 class Kernel{
 
-    method exec(instruction:Instruction) {
-        print "Executing instruction in kernel\n";
+    method exec(syscall:Syscall) {
+        print "Executing syscall ";
+        print syscall;
+        print " in kernel\n";
     }
 
     constructor () {

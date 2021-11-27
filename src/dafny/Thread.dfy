@@ -20,7 +20,9 @@ class Thread {
 
     method exec() modifies this, endokernel {
         if (0 <= pc < |instructions|) {
-            print "Executing instruction in Process\n";
+            print "Executing instruction ";
+            print instructions[pc];
+            print " in Thread\n";
             this.endokernel.trap(instructions[pc]);
             pc := pc + 1;
         }
