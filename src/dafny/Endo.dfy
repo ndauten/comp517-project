@@ -7,8 +7,10 @@ class Endokernel {
     var capabilities: map<Capability, Endoprocess>
     var endoprocesses: map<int, Endoprocess>
     var instructionMap: map<Instruction, Capability>
-    var nextPid:int;
-    var kernel:Kernel;
+    var nextPid:int
+    var kernel:Kernel
+    var syscalls:map<Instruction, Syscall>
+
 
     method createEndoprocess(capability:Capability, instruction:Instruction) returns (endoprocess:Endoprocess) modifies this 
         ensures capability in capabilities && capabilities[capability] == endoprocess;
@@ -40,7 +42,10 @@ class Endokernel {
         }
     }
 
-    method trapEndoprocess(instruction:Instruction, syscall:Syscall, endoId:int) {
+    method trapEndoprocess(instruction:Instruction, endoId:int) {
+        print "Trapping instruction ";
+        print instruction;
+        print " from Endoprocess in Endokernel\n";
         // Verifying if endoprocess has correct access rights to execute this instruction
         if (instruction !in instructionMap){
            print "trapEndoprocess error: no policy for this instruction\n";
@@ -60,10 +65,12 @@ class Endokernel {
                         print "trapEndoprocess error: unknown endoprocess\n";
                     }
                     else {
-                        print "Trapping back syscall ";
-                        print syscall;
-                        print " from Endoprocess in Endokernel\n";
-                        kernel.exec(syscall);
+                        if (instruction in syscalls) {
+                            kernel.exec(syscalls[instruction]);
+                        }
+                        else {
+                            print "trapEndoprocess error: syscall unknown\n";
+                        }
                     }
                 }
             }
@@ -79,6 +86,9 @@ class Endokernel {
         var instruction:Instruction := Instruction.Write('a', 0);
         this.instructionMap := map[instruction := capability];
         this.kernel := kernel;
+        // Definition of the allowed syscalls and mapping between instructions and syscalls
+        this.syscalls := map[Instruction.Write('a', 0) := Syscall.Write('a',0),
+                             Instruction.Read(0) := Syscall.Read(0)];
     }
 }
 
@@ -86,7 +96,6 @@ class Endoprocess {
     var id:int;
     var memorySpace:seq<int>
     var instructions: Instruction
-    var syscalls:map<Instruction, Syscall>
     var endokernel:Endokernel;
 
     constructor(id:int, memorySpace:seq<int>, instructions:Instruction, endokernel:Endokernel) {
@@ -94,17 +103,13 @@ class Endoprocess {
         this.memorySpace := memorySpace;
         this.instructions := instructions;
         this.endokernel := endokernel;
-        // Definition of the allowed syscalls and mapping between instructions and syscalls
-        this.syscalls := map[Instruction.Write('a', 0) := Syscall.Write('a',0),
-                             Instruction.Read(0) := Syscall.Read(0)];
     }
 
     method exec(instruction:Instruction)  {
-        if (instruction in syscalls) {
-            print "Executing syscall ";
-            print syscalls[instruction];
-            print " in Endoprocess\n";
-            endokernel.trapEndoprocess(instruction, syscalls[instruction], this.id);
-        }
+        print "Executing instruction ";
+        print instruction;
+        print " in Endoprocess\n";
+        endokernel.trapEndoprocess(instruction, this.id);
+    
     }
 }
