@@ -1,0 +1,111 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Template for USENIX papers.
+%
+% History:
+%
+% - TEMPLATE for Usenix papers, specifically to meet requirements of
+%   USENIX '05. originally a template for producing IEEE-format
+%   articles using LaTeX. written by Matthew Ward, CS Department,
+%   Worcester Polytechnic Institute. adapted by David Beazley for his
+%   excellent SWIG paper in Proceedings, Tcl 96. turned into a
+%   smartass generic template by De Clarke, with thanks to both the
+%   above pioneers. Use at your own risk. Complaints to /dev/null.
+%   Make it two column with no page numbering, default is 10 point.
+%
+% - Munged by Fred Douglis <douglis@research.att.com> 10/97 to
+%   separate the .sty file from the LaTeX source template, so that
+%   people can more easily include the .sty file into an existing
+%   document. Also changed to more closely follow the style guidelines
+%   as represented by the Word sample file.
+%
+% - Note that since 2010, USENIX does not require endnotes. If you
+%   want foot of page notes, don't include the endnotes package in the
+%   usepackage command, below.
+% - This version uses the latex2e styles, not the very ancient 2.09
+%   stuff.
+%
+% - Updated July 2018: Text block size changed from 6.5" to 7"
+%
+% - Updated Dec 2018 for ATC'19:
+%
+%   * Revised text to pass HotCRP's auto-formatting check, with
+%     hotcrp.settings.submission_form.body_font_size=10pt, and
+%     hotcrp.settings.submission_form.line_height=12pt
+%
+%   * Switched from \endnote-s to \footnote-s to match Usenix's policy.
+%
+%   * \section* => \begin{abstract} ... \end{abstract}
+%
+%   * Make template self-contained in terms of bibtex entires, to allow
+%     this file to be compiled. (And changing refs style to 'plain'.)
+%
+%   * Make template self-contained in terms of figures, to
+%     allow this file to be compiled. 
+%
+%   * Added packages for hyperref, embedding fonts, and improving
+%     appearance.
+%   
+%   * Removed outdated text.
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\documentclass[letterpaper,twocolumn,10pt]{article}
+\usepackage{usenix-2020-09}
+
+% to be able to draw some self-contained figs
+\usepackage{tikz}
+\usepackage{amsmath}
+
+% inlined bib file
+\usepackage{filecontents}
+
+\usepackage{listings}
+%-------------------------------------------------------------------------------
+
+\title{Comp517 Project Proposal}
+\author{Tom Pan, August Pokorak}
+
+\begin{document}
+
+\maketitle
+
+\section{Introduction}
+
+Processes, as defined in the seminal introduction of UNIX, are one of the key abstractions of execution on computers \cite{unix1}.  In essence, they are comprised of program code and a current execution environment (such as register values, stored data, etc).  Since processes have separate virtual address spaces and do not share non-code data, it is more difficult to allow separate processes to collaborate than it is for separate threads of execution running within the same process.  Many different forms of inter-process communication (IPC) have thus been developed over the years.  The most basic is perhaps the hierarchical file system, one of the first examples of which was the Multics system.  In Multics, all memory was part of the file system (no temporary process memory at all) \cite{multics}. In the Unix approach which has seen far more widespread use, permanent files are instead separate from process virtual memory, and each running process has an associated set of file descriptors corresponding to currently open files \cite{unix1}.
+
+One particularly desirable form of IPC is for the output of one process to be used as the input into another process. Of course, a file system could be used to provide this by having processes always write their outputs to stored files, which can then be read by other processes.  However, this is clearly inefficient in terms of space usage, for example if an output is immediately used by only one other process. An alternative approach once again popularized by Unix is the concept of a (anonymous) pipe \cite{unix1}.  A Unix pipe is a temporary memory construct, associated with pair of file descriptors (one for reading and the other for writing) which are returned by the pipe() system call. These file descriptors can be used to connect the output of one child process to the input of another child. Due to their definition, programmers can continue using the established file system API when working with pipes. The concept of piping is also closely tied to the Unix shell, and greatly improves its usability.
+
+Our primary objective is to implement a simple version of the Unix pipe() system call, in order to better comprehend a form of inter-process communication. To allow us to evaluate our implementation's functionality and time performance across different workloads, we also plan to create a basic shell to operate within the Linux environment. Given that Unix-style piping is intricately linked with the fork/exec method for new processes, we believe implementing the shell in languages other than C may prove challenging due to the intricacies of working with certain system calls. 
+
+While we aim to maximize attributes like simplicity, performance, security, programmability, and reliability, it is a given that not all can be optimized equally. Our exploration therefore revolves around understanding different approaches, implementing a system that illustrates necessary tradeoffs, and validating our hypothesis regarding design decision effects. Our success will primarily hinge on functionality—our design must operate as expected. Furthermore, we will utilize both benchmarking performance indicators and qualitative measures, such as programmability, to determine if our approach effectively validates our design rationale. 
+
+Through this endeavor, we anticipate shedding light on the intricacies of crafting a pipeline-able shell and contrasting the efficiency of our naive pipes against Linux's current implementation.  We hope to be able to elucidate the challenges of implementing OS/systems constructs and the repercussions of various implementation decisions on time metrics.
+
+\section{Background}
+
+The concept of piping different programs was perhaps first mentioned by Doug McIlroy in a brief document from 1964 - "We should have some ways of coupling programs like garden hose--screw in another segment when it becomes when it becomes necessary to massage data in another way" \cite{mcilroy}.  Also, in 1967 the Dartmouth Time-Sharing System included so-called "communication files", which we would recognize as substantially similar to Unix pipes. Although they were more general, and with some substantial differences including the need for a parent process to manage one end and the notable lack of the "|" operator. Communication files do, however, share the key characteristics of being based on files and being able to be passed to other processes. Although communication files required management from the parent, they could be treated as normal files by the child, mirroring the usage of Unix pipes as normal files \cite{mcilroydartmouth}. 
+
+A few years later, Unix would make pipes one of the key features of its shell/command line system. Unix pipes build on Unix files to connect arbitrary processes (without either process knowing that the corresponding file descriptors are not associated with "true" files) while maintaining process isolation. In Unix and many subsequent systems, the "|" character is used to specify a pipe between programs in the shell, and an arbitrary number of programs can be chained together in this manner, forming what is known as a pipeline. Also, many command line programs provided by Unix and its derivatives (e.g. grep) are designed to be relatively simple, and to take input from "standard input", apply some transformation, and output to "standard output", i.e. from and to the shell respectively \cite{unix2}.  These small programs (known as filters) can easily be placed within a larger pipeline that performs a complex operation by concatenating smaller ones - at each step, a pipe replaces standard input for the next process and standard output for the previous one.  
+
+The piping approach introduced by the Unix system and carried on in Linux has been in widespread use ever since, without substantial changes to the interface. Mac OS, being based on BSD, also makes use of pipe() system calls \cite{macos}, while Windows provides a CreatePipe function \cite{windows}.  In both cases, as expected the pipe has an associated "read" end and "write" end, and standard file system operations are used to interact with the pipe.
+
+In the early implementation of Unix pipes, the memory construct that truly underlies a pipe is just "essentially a section of shared memory that could be accessed by two processes,"\cite{menonSen} with one writing to the pipe while the other reads from it. The kernel manages the data in the buffer, ensuring synchronization between processes. An interesting detail about the early implementation is that the buffer size per pipe is defined as 4096 bytes, which suggests the value of using a fixed buffer size in our implementation. In line with their usage as normal file descriptors, behind the hood "ancient pipes used a file to provide the backing storage!"\cite{menonSen} The pipe system call code snippet demonstrates the allocation of an inode on the root device and two file structures to assemble the pipe with appropriate flags. The pipe() function adjusts file descriptor numbers, flags, and inode references to establish the two ends of the pipe. In the writep() function, mechanisms are laid out to handle various scenarios like writing to a full or closed pipe and managing the data write cycle within the defined buffer size. The inode's i\_mode is repurposed to indicate waiting read/write operations on the pipe, marking a shift from its usual role of holding read/write/execute permissions.\cite{menonSen}
+
+\section{Methods and Plan}
+
+As stated, we will attempt to implement pipe creation and in-shell usage in a programming language such as C. Although we would like to use an even higher-level language in order to explore the implications of such a language choice, it may not be feasible to do so in anything other than C or closely derived languages. 
+
+One particular property of Unix pipes is that reading from the "read" file descriptor associated with a pipe should block or wait until another process has written to the "write" file descriptor of that pipe; this behavior is particularly tightly coupled to Unix's specific usage of files to represent I/O. We foresee one particularly troublesome aspect of this project being how this behavior can be enforced at the level of the pipe() system call implementation. One workaround solution to this would be to use condition variables or other synchronization constructs to provide the desired behavior in our shell implementation, but perhaps that could be considered too "easy" of a solution. And as in early implementations, another option could be to provide two new system calls, for reading from and writing to pipes, although this will perhaps break the illusion of pipes being treated the same as regular files. We will also need to see if allowing pipelines of more than two processes is feasible, or if we can only implement a single pipe between a pair of "processes".
+
+Evaluating the accuracy of our pipe() implementation should be straightforward as the output of pipelines is known (from simply entering them in the Linux shell).  Evaluating performance overheads compared to the Linux implementation may be more difficult; it may require additional effort to enable and run objective performance benchmarks. We may need to either make our shell implementation work in some fashion with the time wrapper command provided by Linux, or hard-code in various pipelines in our "shell" instead of accepting user input. Especially important is ensuring that our metrics are unbiased either towards or against our implementation.  To complete this project, we do not anticipate that we need any resources beyond a Linux shell and a particular programming language and associated compiler/interpreter.
+
+\section{Milestones}
+
+The initial milestone of our endeavor is to meticulously ascertain the viability of the project. This involves a deep-dive analysis into the core aspects of implementing a version of pipes, particularly focusing on the blocking behavior associated with the file descriptors within the pipe structure. The midterm meeting presents a crucial checkpoint, during which (or ideally before) we aim to have a detailed discourse on the feasibility of the project, exploring potential challenges and devising strategies to overcome them.  If we do not end up switching projects, then we will aim to have started on our implementation and perhaps have some evaluation results by the due date of the "Midterm Report". The discussion and insights garnered during the midterm checkpoint will significantly inform our journey toward achieving the outlined milestones, ensuring we are on a trajectory that aligns with the project's objectives.
+
+Regarding the actual implementation, assuming the project is feasible, the first milestone post-confirmation is developing a minimal shell, forming the base structure on which our pipe implementation will be constructed. Following that, the second milestone encompasses the creation of pseudo-pipes, facilitating read or write operations from a process, although with the simplification of not actually connecting to another process. Transitioning to the third milestone, our focus shifts to actualizing a full-fledged working implementation of pipes, including the full core functionality of inter-process communication usable from our shell. The final milestone is dedicated to conducting an array of benchmarks on different pipelines, aiming to quantitatively measure the performance and efficiency of our pipe implementation in comparison with standard pipes. This evaluative phase is crucial for not only validating our implementation but also for identifying potential areas of optimization and fulfilling our research objectives. The timeline for achieving these milestones is yet to be definitively outlined; however, each milestone represents a significant leap towards realizing the project's overarching goal of replicating a simplified version of pipes, thereby contributing to the broader understanding and application of inter-process communication mechanisms.
+
+\bibliographystyle{plain}
+\bibliography{mybib}
+
+\end{document}
